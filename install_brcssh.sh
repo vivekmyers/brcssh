@@ -79,7 +79,7 @@ expect {
     -nocase -re "\(login\|connected\|welcome\|\$\).*\n" {
         send_user -- "$expect_out(buffer)"
     }
-    -nocase "(*@*.brc.berkeley.edu) password: " {
+    -nocase "*.brc.berkeley.edu* password: " {
         set password [exec python -c "$env(GOOGLE_AUTH_SCRIPT)"]
         send "$password\r"
         expect "*\n"
