@@ -3,6 +3,7 @@
 # Author: Vivek Myers
 # This script installs a custom ssh wrapper that uses Google Authenticator to automatically get BRC ssh codes
 
+
 read -r -d '' SSHLIB_SCRIPT << 'EOFF'
 read -r -d '' GOOGLE_AUTH_SCRIPT << EOF
 import hmac, base64, struct, hashlib, time, json, os
@@ -60,12 +61,17 @@ read -r -d '' SSH_EXPECT_SCRIPT << 'EOF'
 set timeout 15
 log_user 0
 set cmd [lrange $argv 0 end]
-if { [catch { system {[[ -t 0 ]]} } error] } {
-    spawn sh -c "cat | $cmd"
+set tmp [exec mktemp -u]
+
+eval exec mkfifo $tmp
+exec sh -c "cat $tmp 1>&2" &
+
+if { [catch { system {test -t 0} } error] } {
+    spawn sh -c "cat | eval \$@ 2>$tmp" sshlib {*}$cmd
     set piped 1
     set timeout 5
 } else {
-    eval spawn $cmd
+    spawn sh -c "eval \$@ 2>$tmp" sshlib {*}$cmd
     set piped 0
 }
 
@@ -109,17 +115,19 @@ expect {
     }
 }
 
-if { $piped } {
-    while {[gets stdin line] != -1} {
-        send "$line\r"
-        expect -re "(.*\n)"
+catch { 
+    if { $piped } {
+        while {[gets stdin line] != -1} {
+                send "$line\r"
+                expect -re "(.*\n)"
+        }
+        send "\004"
+        expect eof
+        send_user -- "$expect_out(buffer)"
+    } else {
+        interact
     }
-    send "\004"
-    expect eof
-    send_user -- "$expect_out(buffer)"
-} else {
-    catch { interact } error
-}
+} error
 
 catch wait result
 exit [lindex $result 3]
