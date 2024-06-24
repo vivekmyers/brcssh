@@ -64,14 +64,14 @@ set cmd [lrange $argv 0 end]
 set tmp [exec mktemp -u]
 
 eval exec mkfifo $tmp
-exec sh -c "cat $tmp 1>&2" &
+exec sh -c "cat $tmp 1>&2; rm $tmp" &
 
 if { [catch { system {test -t 0} } error] } {
-    spawn sh -c "cat | \$@ 2>$tmp" sshlib {*}$cmd
+    spawn sh -c "cat | ( \"\$@\" ) 2>$tmp" sshlib {*}$cmd
     set piped 1
     set timeout 5
 } else {
-    spawn sh -c "\$@ 2>$tmp" sshlib {*}$cmd
+    spawn sh -c "\"$@\" 2>$tmp" sshlib {*}$cmd
     set piped 0
 }
 
