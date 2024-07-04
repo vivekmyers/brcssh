@@ -127,10 +127,10 @@ catch {
     } else {
         interact
     }
+    catch wait result
+    exit [lindex $result 3]
 } error
 
-catch wait result
-exit [lindex $result 3]
 EOF
 
 function ssh_wrapper {
