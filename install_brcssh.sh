@@ -75,6 +75,8 @@ if { [catch { system {test -t 0} } error] } {
     set piped 0
 }
 
+
+
 trap {
     set rows [stty rows]
     set cols [stty columns]
@@ -82,9 +84,6 @@ trap {
 } WINCH
 
 expect {
-    -nocase -re "\(login\|connected\|welcome\|\$\).*\n" {
-        send_user -- "$expect_out(buffer)"
-    }
     -nocase "*.brc.berkeley.edu* password: " {
         set password [exec python -c "$env(GOOGLE_AUTH_SCRIPT)"]
         send "$password\r"
@@ -108,7 +107,6 @@ expect {
     }
     "*\n" {
         send_user -- "$expect_out(buffer)"
-        exp_continue
     }
     eof {
         send_user -- "$expect_out(buffer)"
@@ -121,9 +119,9 @@ catch {
                 send "$line\r"
                 expect -re "(.*\n)"
         }
+        send_user -- "$expect_out(buffer)"
         send "\004"
         expect eof
-        send_user -- "$expect_out(buffer)"
     } else {
         interact
     }
