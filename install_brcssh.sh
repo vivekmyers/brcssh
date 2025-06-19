@@ -151,7 +151,7 @@ EOFF
 
 
 if [ -z "$BASH" ] || [ -z "$BASH_VERSION" ] || [ -o posix ]; then
-  echo "Error: This script must be run in bash."
+  echo "Error: This script must be run in bash"
   exit 1
 fi
 
@@ -210,15 +210,19 @@ echo "Saved sshlib.sh to $HOME/.local/lib/sshlib.sh" &&
 
 initcmd="source $HOME/.local/lib/sshlib.sh" &&
 
-grep -qF "$initcmd" "$HOME/.bashrc" || {
+if grep -qF "$initcmd" "$HOME/.bashrc"; then
+    echo "Found \`$initcmd\` in $HOME/.bashrc, skipping addition"
+else
     echo "$initcmd" >> "$HOME/.bashrc" &&
     echo "Added \`$initcmd\` to $HOME/.bashrc"
-} &&
+fi
 
 if [[ "$SHELL" == *zsh ]]; then
-    grep -qF "$initcmd" "$HOME/.zshrc" || {
+    if grep -qF "$initcmd" "$HOME/.zshrc"; then
+        echo "Found \`$initcmd\` in $HOME/.zshrc, skipping addition"
+    else
         echo "$initcmd" >> "$HOME/.zshrc" &&
         echo "Added \`$initcmd\` to $HOME/.zshrc"
-    }
+    fi
 fi
 
