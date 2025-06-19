@@ -149,6 +149,12 @@ function rsync { ssh_wrapper rsync "$@"; }
 export GOOGLE_AUTH_SECRETS=$HOME/.local/etc/secrets.json
 EOFF
 
+
+if [ -z "$BASH" ] || [ -z "$BASH_VERSION" ] || [ -o posix ]; then
+  echo "Error: This script must be run in bash."
+  exit 1
+fi
+
 which expect &> /dev/null || {
     echo 'Could not find `expect` in $PATH. Please install Tcl expect and try again.'
     exit 1
@@ -159,17 +165,32 @@ which python &> /dev/null || {
     exit 1
 }
 
+which perl &> /dev/null || {
+    echo 'Could not find `perl` in $PATH. Please install Perl and try again.'
+    exit 1
+}
+
 
 if [[ -e "$HOME/.local/etc/secrets.json" ]]; then
     echo "Found existing authentication token in $HOME/.local/etc/secrets.json"
     read -p "Do you want to overwrite it? [y/N] " -n 1 -r
     echo
-    [[ ! $REPLY =~ ^[Yy]$ ]] && SKIP=1
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        SKIP=1
+    else
+        read pass token <<< "$(perl -e '
+            local $/; $_ = <>; print join " ", m{
+                "savio" \s* : \s* \[
+                    \s* (\d+) \s* , \s* "([^"]+)" \s*
+                \]
+            }sx
+        ' "$HOME/.local/etc/secrets.json")"
+    fi
 fi
 
 if [[ -z "$SKIP" ]]; then
-    read -p "Enter your authentication token: " -e token
-    read -p "Enter your password (4 digit): " -e pass
+    read -p "Enter your authentication token: " -i "$token" -e token
+    read -p "Enter your password (4 digit): " -i "$pass" -e pass
 
     read -r -d '' SECRET_JSON << EOF
 {
